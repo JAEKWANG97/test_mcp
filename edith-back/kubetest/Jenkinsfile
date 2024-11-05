@@ -106,16 +106,16 @@ pipeline {
             }
         }
 
-//         stage ('Get Yaml Repository') {
-//             when {
-//                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
-//             }
-//             steps {
-//                 git credentialsId: "${GITHUB_USERINFO}",
-//                 url: "${GITHUB_REPO_URL}",
-//                 branch: 'master'
-//             }
-//         }
+        stage ('Get Yaml Repository') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                git credentialsId: "${GITHUB_USERINFO}",
+                url: "${GITHUB_REPO_URL}",
+                branch: 'master'
+            }
+        }
         stage('Setting .yaml File') {
             when {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
