@@ -123,6 +123,7 @@ pipeline {
             steps {
                 script {
 //                     withCredentials([usernamePassword(credentialsId: "${GITHUB_USERINFO}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
+//  https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@${GITHUB_REPO_URL.replace('https://','')}
                     sshagent (credentials: [GITOPS_CREDENTIALS]) {
                         sh """
                         git config --global user.email ${GITHUB_ID}
@@ -130,7 +131,7 @@ pipeline {
                         sed -i 's|image: \\(.*\\):[^ ]*|image: \\1:${CURRENT_IMG_TAG}' ${YAML_PATH}
                         git add .
                         git commit -m 'fix: Update image tag to ${CURRENT_IMG_TAG}'
-                        git push https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@${GITHUB_REPO_URL.replace('https://','')}
+                        git push
                         """
                     }
                 }
