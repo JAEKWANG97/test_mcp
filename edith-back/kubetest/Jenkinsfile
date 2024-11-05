@@ -1,0 +1,168 @@
+def skipRemainingStages = true
+
+pipeline {
+    agent any
+
+    triggers {
+        gitlab(
+            triggerOnPush: true,
+        )
+    }
+
+    environment {
+        REPO_URL = 'https://lab.ssafy.com/s11-final/S11P31C206.git'
+        CHECKOUT_BRANCH = '*/cicd-test'
+        CHECKOUT_FOLDER = 'edith-back'
+        SERVER_PORT = '9090'
+        SERVER_NAME = 'kubetest'
+        APP_TYPE = 'spring-boot-app'
+
+        AWS_REGION = 'ap-northeast-2'
+        AWS_ACCESS_KEYS = credentials('AWS_ACCESS_KEYS')
+        ECR_URL = credentials('ECR_URL')
+        ECR_REPO = 'ssafy/edith'
+
+        GITHUB_USERINFO = credentials('GITHUB_USER')
+        GITHUB_REPO = 'https://github.com/MJ-Kor/edith_eks_yaml.git'
+        GITHUB_ID = 'mj1584.mk@gmail.com'
+        GITHUB_NAME = 'MJ-Kor'
+
+        PREVIOUS_BUILD_NUMBER = "${Integer.parseInt(env.BUILD_NUMBER) - 1}"
+        CURRENT_BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        PREVIOUS_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${PREVIOUS_BUILD_NUMBER}"
+        CURRENT_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${CURRENT_BUILD_NUMBER}" // server 폴더가 Upper case일 경우 사용
+        YAML_PATH = "${SERVER_NAME}.yaml"
+        DOCKER_USERINFO = credentials('DOCKER_USER')
+        DOCKER_REPO = credentials('DOCKER_REPO')
+
+        EC2_IP = credentials('k11c206_IP')
+        SSH_INFO = credentials('k11c206_SSH')
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout([$class: 'GitSCM',
+                    branches: [[name: "${CHECKOUT_BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: "${REPO_URL}",
+                        credentialsId: 'GitLab_Personal_Access_Token'
+                    ]],
+                    extensions: [[$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: "${SERVER_NAME}/"]]]]
+                ])
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                script {
+                    skipRemainingStages = false
+                    sh """
+                    cd ${CHECKOUT_FOLDER}/${SERVER_NAME}
+                    chmod +x ./gradlew
+                    ./gradlew clean build
+                    docker build -t ${SERVER_NAME}-${APP_TYPE}:latest --build-arg JAR_FILE=build/libs/${SERVER_NAME}-0.0.1-SNAPSHOT.jar .
+                    docker tag ${SERVER_NAME}-${APP_TYPE}:latest ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Login to ECR') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                script {
+                    sh """
+                    aws configure set aws_access_key_id ${AWS_ACCESS_KEYS_USR}
+                    aws configure set aws_secret_access_key ${AWS_ACCESS_KEYS_PSW}
+                    aws configure set region ${AWS_REGION}
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+                    """
+                }
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/**"
+            }
+            steps {
+                script {
+                    sh """
+                    aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=${PREVIOUS_IMG_TAG} || echo "Image not found, skipping deletion."
+                    docker push ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
+                    docker rmi ${SERVER_NAME}:latest || true
+                    docker rmi ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Setting .yaml File') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                git credentialsId: "${GITHUB_USERINFO}",
+                    url: "${GITHUB_REPO_URL}",
+                    branch: 'master'
+                script {
+                    sh """
+                    git config --global user.email ${GITHUB_ID}
+                    git config --global user.name ${GITHUB_NAME}
+                    sed -i 's|image: \\(.*\\):[^ ]*|image: \\1:${CURRENT_IMG_TAG}' ${YAML_PATH}
+                    git add .
+                    git commit -m 'fix: Update image tag to ${CURRENT_IMG_TAG}'
+                    git push https://${GITHUB_USERINFO_USR}:${GITHUB_USERINFO_PSW}@${GITHUB_REPO_URL.replace('https://','')}
+                    """
+                }
+            }
+        }
+
+        stage('Logout from ECR') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            script {
+                sh """
+                docker logout ${ECR_URL}
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished!'
+        }
+        success {
+            script{
+                if (skipRemainingStages) {
+                    echo "No changes in ${SERVER_NAME} folder, skipping build and deploy."
+                } else {
+                    echo "CI successfully on ${SERVER_NAME} server!"
+                    def user = sh(script: 'git log -1 --pretty=format:"%an"', returnStdout: true).trim()
+                    mattermostSend (
+                        color: 'good',
+                        message: "${user}님의 ${env.JOB_NAME} 서버 CI 성공. (#${env.BUILD_NUMBER}) ",
+                    )
+                }
+            }
+        }
+        failure {
+            echo 'CI failed!'
+            script{
+                def user = sh(script: 'git log -1 --pretty=format:"%an"', returnStdout: true).trim()
+                mattermostSend (
+                    color: 'danger',
+                    message: "${user}님? ${env.JOB_NAME} 서버 CI 실패했는데요? (#${env.BUILD_NUMBER}) ",
+                )
+            }
+        }
+    }
+}
