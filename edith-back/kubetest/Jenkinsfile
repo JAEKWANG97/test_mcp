@@ -26,6 +26,7 @@ pipeline {
         GITHUB_REPO_URL = 'https://github.com/MJ-Kor/edith_eks_yaml.git'
         GITHUB_ID = 'mj1584.mk@gmail.com'
         GITHUB_NAME = 'MJ-Kor'
+        GITHUB_PAT = credentials('GITHUB_PAT')
 
         PREVIOUS_BUILD_NUMBER = "${Integer.parseInt(env.BUILD_NUMBER) - 1}"
         CURRENT_BUILD_NUMBER = "${env.BUILD_NUMBER}"
@@ -108,7 +109,7 @@ pipeline {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
-                git credentialsId: 'GITHUB_USERINFO',
+                git credentialsId: 'GITHUB_PAT',
                 url: "${GITHUB_REPO_URL}",
                 branch: 'master'
             }
