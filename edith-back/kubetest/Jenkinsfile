@@ -17,6 +17,10 @@ pipeline {
         SERVER_NAME = 'kubetest'
         APP_TYPE = 'spring-boot-app'
 
+        GITOPS_CREDENTIALS = 'GITHUB_USER'
+
+
+
         AWS_REGION = 'ap-northeast-2'
         AWS_ACCESS_KEYS = credentials('AWS_ACCESS_KEYS')
         ECR_URL = credentials('ECR_URL')
@@ -108,11 +112,11 @@ pipeline {
             when {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
-            steps {
-                git credentialsId: "${GITHUB_PAT}",
-                url: "${GITHUB_REPO_URL}",
-                branch: 'master'
-            }
+//             steps {
+//                 git credentialsId: "${GITHUB_USERINFO}",
+//                 url: "${GITHUB_REPO_URL}",
+//                 branch: 'master'
+//             }
         }
         stage('Setting .yaml File') {
             when {
@@ -120,7 +124,8 @@ pipeline {
             }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${GITHUB_USERINFO}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
+//                     withCredentials([usernamePassword(credentialsId: "${GITHUB_USERINFO}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
+                    sshagent (credentials: [GITHUB_USERINFO]) {
                         sh """
                         git config --global user.email ${GITHUB_ID}
                         git config --global user.name ${GITHUB_NAME}
