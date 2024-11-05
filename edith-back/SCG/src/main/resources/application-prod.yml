@@ -12,14 +12,14 @@ spring:
     gateway:
       routes:
         - id: user-test
-          uri: http://localhost:8081 # User 서버 주소
+          uri: http://user-spring-boot-service:8081 # User 서버 주소
           predicates:
             - Path=/api/v1/users/test
           filters:
             - name: JwtAuthFilter
 
         - id: user
-          uri: http://localhost:8081
+          uri: http://user-spring-boot-service:8081
           predicates:
             - Path=/api/v1/users/**
 
