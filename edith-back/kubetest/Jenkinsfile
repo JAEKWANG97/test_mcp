@@ -30,7 +30,7 @@ pipeline {
         PREVIOUS_BUILD_NUMBER = "${Integer.parseInt(env.BUILD_NUMBER) - 1}"
         CURRENT_BUILD_NUMBER = "${env.BUILD_NUMBER}"
         PREVIOUS_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${PREVIOUS_BUILD_NUMBER}"
-        CURRENT_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${CURRENT_BUILD_NUMBER}" // server 폴더가 Upper case일 경우 사용
+        CURRENT_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${CURRENT_BUILD_NUMBER}"
         YAML_PATH = "${SERVER_NAME}.yaml"
         DOCKER_USERINFO = credentials('DOCKER_USER')
         DOCKER_REPO = credentials('DOCKER_REPO')
