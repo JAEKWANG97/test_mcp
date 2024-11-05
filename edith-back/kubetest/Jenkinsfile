@@ -23,7 +23,7 @@ pipeline {
         ECR_REPO = 'ssafy/edith'
 
         GITHUB_USERINFO = credentials('GITHUB_USER')
-        GITHUB_REPO = 'https://github.com/MJ-Kor/edith_eks_yaml.git'
+        GITHUB_REPO_URL = 'https://github.com/MJ-Kor/edith_eks_yaml.git'
         GITHUB_ID = 'mj1584.mk@gmail.com'
         GITHUB_NAME = 'MJ-Kor'
 
