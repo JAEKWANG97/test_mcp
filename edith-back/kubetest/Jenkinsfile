@@ -112,7 +112,7 @@ pipeline {
                     url: "${GITHUB_REPO_URL}",
                     branch: 'master'
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS_ID}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')])
+                    withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS_ID}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
                         sh """
                         git config --global user.email ${GITHUB_ID}
                         git config --global user.name ${GITHUB_NAME}
@@ -121,6 +121,7 @@ pipeline {
                         git commit -m 'fix: Update image tag to ${CURRENT_IMG_TAG}'
                         git push https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@${GITHUB_REPO_URL.replace('https://','')}
                         """
+                    }
                 }
             }
         }
