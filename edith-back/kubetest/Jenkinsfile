@@ -111,7 +111,7 @@ pipeline {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
-                git credentialsId: "${GITHUB_USERINFO}",
+                git credentialsId: 'GITHUB_USER',
                 url: "${GITHUB_REPO_URL}",
                 branch: 'master'
             }
@@ -122,16 +122,16 @@ pipeline {
             }
             steps {
                 script {
-//                     withCredentials([usernamePassword(credentialsId: "${GITHUB_USERINFO}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: "${GITHUB_USERINFO}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
 //  https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@${GITHUB_REPO_URL.replace('https://','')}
-                    sshagent (credentials: [GITOPS_CREDENTIALS]) {
+//                     sshagent (credentials: [GITOPS_CREDENTIALS]) {
                         sh """
                         git config --global user.email ${GITHUB_ID}
                         git config --global user.name ${GITHUB_NAME}
                         sed -i 's|image: \\(.*\\):[^ ]*|image: \\1:${CURRENT_IMG_TAG}' ${YAML_PATH}
                         git add .
                         git commit -m 'fix: Update image tag to ${CURRENT_IMG_TAG}'
-                        git push
+                        git push https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@${GITHUB_REPO_URL.replace('https://','')}
                         """
                     }
                 }
