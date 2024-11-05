@@ -108,7 +108,7 @@ pipeline {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
-                git credentialsId: "${GITHUB_USERINFO}",
+                git credentialsId: 'GITHUB_USERINFO',
                 url: "${GITHUB_REPO_URL}",
                 branch: 'master'
             }
