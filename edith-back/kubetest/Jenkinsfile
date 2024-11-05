@@ -128,10 +128,12 @@ pipeline {
             when {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
-            script {
-                sh """
-                docker logout ${ECR_URL}
-                """
+            steps{
+                script {
+                    sh """
+                    docker logout ${ECR_URL}
+                    """
+                }
             }
         }
     }
