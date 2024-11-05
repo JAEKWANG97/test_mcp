@@ -122,7 +122,7 @@ pipeline {
             }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${GITHUB_USERINFO}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: 'GITHUB_USER', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
 //  https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@${GITHUB_REPO_URL.replace('https://','')}
 //                     sshagent (credentials: [GITOPS_CREDENTIALS]) {
                         sh """
