@@ -44,7 +44,7 @@ pipeline {
     stages {
         stage('Checkout Project Code') {
             steps {
-                dir(${PROJECT_ROOT}){
+                dir('project'){
                     checkout([$class: 'GitSCM',
                         branches: [[name: "${CHECKOUT_BRANCH}"]],
                         userRemoteConfigs: [[
@@ -112,7 +112,7 @@ pipeline {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
-                dir(${YAML_ROOT}){
+                dir('yaml'){
                     git credentialsId: 'GITHUB_USER',
                     url: "${GITHUB_REPO_URL}",
                     branch: 'master'
