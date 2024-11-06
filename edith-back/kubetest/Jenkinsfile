@@ -56,7 +56,7 @@ pipeline {
                 }
             }
         }
-
+//
         stage('Build Docker Image') {
             when {
                 changeset "${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
