@@ -59,7 +59,7 @@ pipeline {
 
         stage('Build Docker Image') {
             when {
-                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+                changeset "${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
                 script {
@@ -77,7 +77,7 @@ pipeline {
 
         stage('Login to ECR') {
             when {
-                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+                changeset "${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
                 script {
@@ -93,7 +93,7 @@ pipeline {
 
         stage('Push Docker Image to ECR') {
             when {
-                changeset "${CHECKOUT_FOLDER}/**"
+                changeset "${PROJECT_ROOT}/${CHECKOUT_FOLDER}/**"
             }
             steps {
                 script {
@@ -109,7 +109,7 @@ pipeline {
 
         stage ('Get Yaml Repository') {
             when {
-                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+                changeset "${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
                 dir('yaml'){
@@ -121,7 +121,7 @@ pipeline {
         }
         stage('Setting .yaml File') {
             when {
-                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+                changeset "${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps {
                 script {
@@ -142,7 +142,7 @@ pipeline {
 
         stage('Logout from ECR') {
             when {
-                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+                changeset "${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
             }
             steps{
                 script {
