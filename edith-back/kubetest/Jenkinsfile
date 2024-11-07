@@ -42,10 +42,6 @@ pipeline {
         // DOCKER
         DOCKER_USERINFO = credentials('DOCKER_USER')
         DOCKER_REPO = credentials('DOCKER_REPO')
-
-        // EC2
-        EC2_IP = credentials('k11c206_IP')
-        SSH_INFO = credentials('k11c206_SSH')
     }
 
     stages {
