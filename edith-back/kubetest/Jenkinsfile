@@ -45,6 +45,7 @@ pipeline {
 
         //Dummy
         DUMMY = 'Dummy'
+        DUMMY2 = 'Dummy2'
     }
 
     stages {
