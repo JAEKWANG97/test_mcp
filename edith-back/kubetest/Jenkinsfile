@@ -42,6 +42,9 @@ pipeline {
         // DOCKER
         DOCKER_USERINFO = credentials('DOCKER_USER')
         DOCKER_REPO = credentials('DOCKER_REPO')
+
+        //Dummy
+        DUMMY = 'Dummy'
     }
 
     stages {
