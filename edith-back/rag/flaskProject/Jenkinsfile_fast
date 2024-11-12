@@ -36,7 +36,7 @@ pipeline {
         CURRENT_BUILD_NUMBER = "${env.BUILD_NUMBER}"
         PREVIOUS_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${PREVIOUS_BUILD_NUMBER}"
         CURRENT_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${CURRENT_BUILD_NUMBER}"
-        BASE_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-BASE"
+        BASE_IMG_TAG = "${SERVER_NAME}-flask-app-base"
         YAML_PATH = "${SERVER_NAME}.yaml"
         PROJECT_ROOT = 'project'
         YAML_ROOT = 'yaml'
