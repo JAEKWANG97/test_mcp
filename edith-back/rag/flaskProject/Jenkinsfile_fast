@@ -1,0 +1,198 @@
+def skipRemainingStages = true
+
+pipeline {
+    agent any
+
+    triggers {
+        gitlab(
+            triggerOnPush: true,
+        )
+    }
+
+    environment {
+
+        // GitLab
+        REPO_URL = 'https://lab.ssafy.com/s11-final/S11P31C206.git'
+        CHECKOUT_BRANCH = '*/develop'
+        CHECKOUT_FOLDER = 'edith-back'
+        SERVER_PORT = '8083'
+        SERVER_NAME = 'rag'
+        APP_TYPE = 'flask-app-fast'
+
+        // AWS
+        AWS_REGION = 'ap-northeast-2'
+        AWS_ACCESS_KEYS = credentials('AWS_ACCESS_KEYS')
+        ECR_URL = credentials('ECR_URL')
+        ECR_REPO = 'ssafy/edith'
+
+        // GITHUB
+        GITHUB_REPO_URL = 'https://github.com/MJ-Kor/edith_eks_yaml.git'
+        GITHUB_ID = 'mj1584.mk@gmail.com'
+        GITHUB_NAME = 'MJ-Kor'
+
+        // CI INFO
+        PREVIOUS_BUILD_NUMBER = "${Integer.parseInt(env.BUILD_NUMBER) - 1}"
+        CURRENT_BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        PREVIOUS_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${PREVIOUS_BUILD_NUMBER}"
+        CURRENT_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${CURRENT_BUILD_NUMBER}"
+        BASE_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-BASE"
+        YAML_PATH = "${SERVER_NAME}.yaml"
+        PROJECT_ROOT = 'project'
+        YAML_ROOT = 'yaml'
+
+        // DOCKER
+        DOCKER_USERINFO = credentials('DOCKER_USER')
+        DOCKER_REPO = credentials('DOCKER_REPO')
+
+        // SPRING
+        SPRING_JWT_SECRET = credentials('SPRING_JWT_SECRET')
+    }
+
+    stages {
+        stage('Checkout Project Code') {
+            steps {
+                dir('project'){
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: "${CHECKOUT_BRANCH}"]],
+                        userRemoteConfigs: [[
+                            url: "${REPO_URL}",
+                            credentialsId: 'GitLab_Personal_Access_Token'
+                        ]],
+                        extensions: [[$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: "${SERVER_NAME}/"]]]]
+                    ])
+                }
+            }
+        }
+
+        stage('Login to ECR') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                script {
+                    sh """
+                    aws configure set aws_access_key_id ${AWS_ACCESS_KEYS_USR}
+                    aws configure set aws_secret_access_key ${AWS_ACCESS_KEYS_PSW}
+                    aws configure set region ${AWS_REGION}
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+                    """
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                script {
+                    skipRemainingStages = false
+                    sh """
+                    cd ${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/flaskProject
+                    if docker pull ${ECR_URL}/${ECR_REPO}:${PREVIOUS_IMG_TAG}
+                        docker build --cache-from ${ECR_URL}/${ECR_REPO}:${PREVIOUS_IMG_TAG} -t ${SERVER_NAME}-${APP_TYPE}:latest .
+                    else
+                        echo "No previous image available, continuing with base image"
+                        docker pull ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG}
+                        docker build --cache-from ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG} -t ${SERVER_NAME}-${APP_TYPE}:latest .
+                    docker tag ${SERVER_NAME}-${APP_TYPE}:latest ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
+                    """
+                }
+            }
+        }
+
+
+        stage('Push Docker Image to ECR') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                script {
+                    sh """
+                    aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=${PREVIOUS_IMG_TAG} || echo "Image not found, skipping deletion."
+                    docker push ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
+                    docker rmi ${SERVER_NAME}-${APP_TYPE}:latest || true
+                    docker rmi ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG} || true
+                    docker rmi ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
+                    """
+                }
+            }
+        }
+
+        stage ('Get Yaml Repository') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                dir('yaml'){
+                    git credentialsId: 'GITHUB_USER',
+                    url: "${GITHUB_REPO_URL}",
+                    branch: 'master'
+                }
+            }
+        }
+        stage('Setting .yaml File') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'GITHUB_USER', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PASSWORD')]) {
+                        sh """
+                        git config --global user.email ${GITHUB_ID}
+                        git config --global user.name ${GITHUB_NAME}
+                        cd ${YAML_ROOT}/${SERVER_NAME}
+                        sed -i 's|image: \\(.*\\):[^ ]*|image: \\1:${CURRENT_IMG_TAG}|' ${YAML_PATH}
+                        git add .
+                        git commit -m 'fix: Update image tag to ${CURRENT_IMG_TAG}'
+                        git push https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@${GITHUB_REPO_URL.replace('https://','')}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Logout from ECR') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps{
+                script {
+                    sh """
+                    docker logout ${ECR_URL}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished!'
+        }
+        success {
+            script{
+                if (skipRemainingStages) {
+                    echo "No changes in ${SERVER_NAME} folder, skipping build and deploy."
+                } else {
+                    echo "CI successfully on ${SERVER_NAME} server!"
+                    def user = sh(script: 'git log -1 --pretty=format:"%an"', returnStdout: true).trim()
+                    mattermostSend (
+                        color: 'good',
+                        message: "${user}님의 ${env.JOB_NAME} 서버 CI 성공. (#${env.BUILD_NUMBER}) ",
+                    )
+                }
+            }
+        }
+        failure {
+            echo 'CI failed!'
+            script{
+                def user = sh(script: 'git log -1 --pretty=format:"%an"', returnStdout: true).trim()
+                mattermostSend (
+                    color: 'danger',
+                    message: "${user}님? ${env.JOB_NAME} 서버 CI 실패했는데요? (#${env.BUILD_NUMBER}) ",
+                )
+            }
+        }
+    }
+}
