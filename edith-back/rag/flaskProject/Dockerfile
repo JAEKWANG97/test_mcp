@@ -101,6 +101,10 @@
 
 
 # 기존 베이스 이미지를 사용
+ARG ECR_URL
+ARG ECR_REPO
+ARG BASE_IMG_TAG
+
 FROM ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG} as base
 
 # 최종 단계

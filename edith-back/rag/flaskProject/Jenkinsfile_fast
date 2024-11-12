@@ -91,7 +91,7 @@ pipeline {
                     sh """
                     cd ${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/flaskProject
                     docker pull ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG}
-                    docker build --cache-from ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG} -t ${SERVER_NAME}-${APP_TYPE}:latest .
+                    docker build --build-arg ECR_URL=${ECR_URL} --build-arg ECR_REPO=${ECR_REPO} --build-arg BASE_IMG_TAG=${BASE_IMG_TAG} -t ${SERVER_NAME}-${APP_TYPE}:latest .
                     docker tag ${SERVER_NAME}-${APP_TYPE}:latest ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
                     """
                 }
