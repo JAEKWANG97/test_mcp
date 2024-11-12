@@ -14,7 +14,7 @@ pipeline {
 
         // GitLab
         REPO_URL = 'https://lab.ssafy.com/s11-final/S11P31C206.git'
-        CHECKOUT_BRANCH = '*/develop'
+        CHECKOUT_BRANCH = '*/code-analysis'
         CHECKOUT_FOLDER = 'edith-back'
         SERVER_PORT = '8083'
         SERVER_NAME = 'rag'
