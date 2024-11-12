@@ -90,12 +90,13 @@ pipeline {
                     skipRemainingStages = false
                     sh """
                     cd ${PROJECT_ROOT}/${CHECKOUT_FOLDER}/${SERVER_NAME}/flaskProject
-                    if docker pull ${ECR_URL}/${ECR_REPO}:${PREVIOUS_IMG_TAG}
+                    if docker pull ${ECR_URL}/${ECR_REPO}:${PREVIOUS_IMG_TAG}; then
                         docker build --cache-from ${ECR_URL}/${ECR_REPO}:${PREVIOUS_IMG_TAG} -t ${SERVER_NAME}-${APP_TYPE}:latest .
                     else
                         echo "No previous image available, continuing with base image"
                         docker pull ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG}
                         docker build --cache-from ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG} -t ${SERVER_NAME}-${APP_TYPE}:latest .
+                    fi
                     docker tag ${SERVER_NAME}-${APP_TYPE}:latest ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
                     """
                 }
