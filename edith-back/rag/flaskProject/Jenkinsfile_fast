@@ -105,6 +105,7 @@ pipeline {
             }
             steps {
                 script {
+                    aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text
                     def tags = sh(
                         script: """
                             aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text | grep "^${DELETE_IMG_TAG}"
