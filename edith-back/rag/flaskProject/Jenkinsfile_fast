@@ -110,7 +110,7 @@ pipeline {
                     """
                     def tags = sh(
                         script: """
-                            aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text | grep "^${DELETE_IMG_TAG}"
+                            aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text | tr '\\t' '\\n' | grep "^${DELETE_IMG_TAG}"
                         """,
                         returnStdout: true
                     ).trim()
