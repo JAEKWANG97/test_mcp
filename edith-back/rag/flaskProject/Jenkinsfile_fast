@@ -18,7 +18,7 @@ pipeline {
         CHECKOUT_FOLDER = 'edith-back'
         SERVER_PORT = '8083'
         SERVER_NAME = 'rag'
-        APP_TYPE = 'flask-app-fast'
+        APP_TYPE = 'flask-app'
 
         // AWS
         AWS_REGION = 'ap-northeast-2'
@@ -34,9 +34,10 @@ pipeline {
         // CI INFO
         PREVIOUS_BUILD_NUMBER = "${Integer.parseInt(env.BUILD_NUMBER) - 1}"
         CURRENT_BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        DELETE_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}"
         PREVIOUS_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${PREVIOUS_BUILD_NUMBER}"
         CURRENT_IMG_TAG = "${SERVER_NAME}-${APP_TYPE}-${CURRENT_BUILD_NUMBER}"
-        BASE_IMG_TAG = "${SERVER_NAME}-flask-app-base"
+        BASE_IMG_TAG = "${SERVER_NAME}-flask-base"
         YAML_PATH = "${SERVER_NAME}.yaml"
         PROJECT_ROOT = 'project'
         YAML_ROOT = 'yaml'
@@ -105,7 +106,10 @@ pipeline {
             steps {
                 script {
                     sh """
-                    aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=${PREVIOUS_IMG_TAG} || echo "Image not found, skipping deletion."
+                    aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text | grep "^${DELETE_IMG_TAG}" | while read -r TAG; do
+                    echo "Deleting image with tag: ${TAG}"
+                    aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=${TAG}
+                    done
                     docker push ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
                     docker rmi ${SERVER_NAME}-${APP_TYPE}:latest || true
                     docker rmi ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG} || true
