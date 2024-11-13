@@ -7,7 +7,7 @@ routes_bp = Blueprint('routes', __name__)
 
 @routes_bp.route('/rag/health-check', methods=['GET'])
 def health_check():
-    return "I'm Alive!!!"
+    return "I'm Alive!!! CICD fast!!!"
 
 @routes_bp.route('/rag/portfolio', methods=['POST'])
 def portfolio_make():
