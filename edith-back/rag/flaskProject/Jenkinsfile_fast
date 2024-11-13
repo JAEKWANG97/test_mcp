@@ -106,7 +106,7 @@ pipeline {
             steps {
                 script {
                     sh"""
-                    aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text
+                    aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' tr '\\t' '\\n' --output text
                     """
                     def tags = sh(
                         script: """
