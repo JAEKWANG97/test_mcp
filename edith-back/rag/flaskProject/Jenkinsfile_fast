@@ -99,6 +99,31 @@ pipeline {
             }
         }
 
+        stage('Delete Previous Docker Image from ECR') {
+            when {
+                changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
+            }
+            steps {
+                script {
+                    def tags = sh(
+                        script: """
+                            aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text | grep "^${DELETE_IMG_TAG}"
+                        """,
+                        returnStdout: true
+                    ).trim()
+
+                    if (tags) {
+                        tags.split().each { tag ->
+                            echo "Deleting image with tag: ${tag}"
+                            sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=${tag}"
+                        }
+                    } else {
+                        echo "No images found with prefix '${DELETE_IMG_TAG}', skipping deletion."
+                    }
+                }
+            }
+        }
+
         stage('Push Docker Image to ECR') {
             when {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
@@ -106,10 +131,6 @@ pipeline {
             steps {
                 script {
                     sh """
-                    aws ecr list-images --repository-name ${ECR_REPO} --query 'imageIds[*].imageTag' --output text | grep "^${DELETE_IMG_TAG}" | while read -r TAG; do
-                    echo "Deleting image with tag: ${TAG}"
-                    aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=${TAG}
-                    done
                     docker push ${ECR_URL}/${ECR_REPO}:${CURRENT_IMG_TAG}
                     docker rmi ${SERVER_NAME}-${APP_TYPE}:latest || true
                     docker rmi ${ECR_URL}/${ECR_REPO}:${BASE_IMG_TAG} || true
@@ -131,6 +152,7 @@ pipeline {
                 }
             }
         }
+
         stage('Setting .yaml File') {
             when {
                 changeset "${CHECKOUT_FOLDER}/${SERVER_NAME}/**"
