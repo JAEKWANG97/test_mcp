@@ -111,7 +111,7 @@ pipeline {
                         """,
                         returnStdout: true
                     ).trim()
-
+                    echo ${tags}
                     if (tags) {
                         tags.split().each { tag ->
                             echo "Deleting image with tag: ${tag}"
