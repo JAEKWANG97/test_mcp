@@ -6,7 +6,7 @@ import java.util.List;
 public record RegisterProjectRequest(
         Long id,
         String name,
-        String description,
+        String contents,
         Long userId,
         List<String> branches
 ) {
@@ -15,7 +15,7 @@ public record RegisterProjectRequest(
         return new RegisterProjectServiceRequest(
                 this.id,
                 this.name,
-                this.description,
+                this.contents,
                 this.branches
         );
     }
