@@ -240,7 +240,7 @@ public class PortfolioService {
 //
 //        return UserProject.builder()
 //                .userId(1L)
-//                .title("E.D.I.T.H.")
+//                .name("E.D.I.T.H.")
 //                .description("asdfasdf")
 //                .project(project)
 //                .build();
