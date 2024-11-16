@@ -1,7 +1,5 @@
 package com.edith.developmentassistant.service;
 
-import static com.edith.developmentassistant.utils.StringUtils.defaultIfNullOrEmpty;
-
 import com.edith.developmentassistant.client.dto.mergerequest.Change;
 import com.edith.developmentassistant.client.dto.mergerequest.MergeRequestDiffResponse;
 import com.edith.developmentassistant.client.dto.rag.CodeReviewChanges;
@@ -89,11 +87,11 @@ public class WebhookService {
                                             String advice, List<String> techStack, List<String> fixLogs) {
         return DashboardDto.builder()
                 .projectId(projectId)
-                .recentCodeReview(defaultIfNullOrEmpty(recentCodeReview, "No recent code review available"))
-                .recentCommitMessage(defaultIfNullOrEmpty(recentCommitMessage, "No recent commit message available"))
-                .advice(defaultIfNullOrEmpty(advice, "No advice provided"))
-                .techStack(defaultIfNullOrEmpty(techStack, List.of("Default Tech Stack")))
-                .fixLogs(defaultIfNullOrEmpty(fixLogs, List.of("No fix logs available")))
+                .recentCodeReview(recentCodeReview)
+                .recentCommitMessage(recentCommitMessage)
+                .advice(advice)
+                .techStack(techStack)
+                .fixLogs(fixLogs)
                 .build();
     }
 

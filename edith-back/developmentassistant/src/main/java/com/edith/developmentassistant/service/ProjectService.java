@@ -275,22 +275,8 @@ public class ProjectService {
 
     public ProjectDashboardDto getProjectDashboard(String token, Long projectId) {
 
+        // TODO: Implement this business logic
         DashboardDto dashboardDto = (DashboardDto) redisTemplate.opsForValue().get("dashboard:" + projectId);
-
-        return getProjectDashboardDto(dashboardDto);
-    }
-
-    private static ProjectDashboardDto getProjectDashboardDto(DashboardDto dashboardDto) {
-        if (dashboardDto == null) {
-            return ProjectDashboardDto.builder()
-                    .recentCodeReview("No recent code review")
-                    .recentCommitMessage("No recent commit message")
-                    .advice("No advice")
-                    .fixLogs(List.of())
-                    .techStack(List.of())
-                    .build();
-        }
-
         return ProjectDashboardDto.from(dashboardDto);
     }
 
