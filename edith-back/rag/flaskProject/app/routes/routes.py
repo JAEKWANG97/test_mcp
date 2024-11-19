@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.services import portfolio
-import logging
+from app.services import logging
+from quart import Quart, request, jsonify
+import asyncio
 
 import time
 
@@ -8,8 +10,8 @@ import time
 routes_bp = Blueprint('routes', __name__)
 
 # 로거 설정
-logger = logging.getLogger(__name__)
-
+logger = logging.__get_logger()
+app = Quart(__name__)
 
 @routes_bp.route('/rag/health-check', methods=['GET'])
 def health_check():
@@ -22,7 +24,7 @@ def health_check():
 def portfolio_make():
     try:
         # 요청 데이터 로깅
-        data = request.get_json()
+        data = await request.get_json()
         logger.info("Received request data: %s", data)
 
         # 데이터 추출
@@ -42,7 +44,7 @@ def portfolio_make():
         logger.debug("Description: %s", description)
 
         # 포트폴리오 생성 호출
-        result = portfolio.make_portfolio(user_id, summaries, merge_request, description)
+        result = await portfolio.generate_portfolio(user_id, summaries, merge_request, description)
         logger.info("Portfolio creation result: %s", result)
 
         # 성공 응답

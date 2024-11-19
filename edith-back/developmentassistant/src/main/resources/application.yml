@@ -22,7 +22,7 @@ server:
 
 api:
   flask:
-    portfolio: http://rag-flask-service:8183/rag/portfolio
-#    portfolio: http://localhost:8083/rag/portfolio # 로컬
+#    portfolio: http://rag-flask-service:8183/rag/portfolio
+    portfolio: http://localhost:5000/rag/portfolio # 로컬
     rag : http://rag-flask-service:8183/rag
 

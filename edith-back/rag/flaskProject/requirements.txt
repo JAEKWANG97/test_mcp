@@ -9,6 +9,8 @@ langchain-community
 langchain-openai
 langchain-chroma
 langchain-core
+quart
+quart-flask-patch
 
 tf-keras
 sentence-transformers #==2.2.2
